@@ -1,0 +1,78 @@
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+
+<!-- Construct a dom-module with id used -->
+<dom-module id="form-component">
+    <template>
+        <paper-input
+            placeholder="Enter a city Name"
+            value="{{searchString}}"
+            on-keyup="findCity"
+        ></paper-input>
+        <paper-listbox
+            selected="[[selectedCity]]"
+            attr-for-selected="data-city"
+            on-iron-select="setSelected">
+            <template is="dom-repeat" items="[[candidateCities]]" as="city">
+                <paper-item data-city="[[city]]"> [[city.name]] </paper-item>
+            </template>
+        </paper-listbox>
+    	<iron-ajax
+            id="cityRequest"
+            url="cities.json"
+            on-response="setCitylist"
+            auto
+        ></iron-ajax>
+    </template>
+    <script>
+        // Define a class which extends Polymer.Element
+        class FormComponent extends Polymer.Element {
+            // Stamp template from this dom-module into element's shadow DOM
+            static get is() { return "form-component"; }
+            // properties list for the component
+            static get properties() {
+                return {
+                    cityList:{
+                        type:Array
+                    },
+                    searchString:{
+                        type:String
+                    },
+                    candidateCities:{
+                        type:Array
+                    },
+                    selectedCity:{
+                        type:Object,
+                        notify: true
+                    }
+                };
+            }
+         
+            setCitylist() {
+                this.set("cityList", this.$.cityRequest.lastResponse);
+            }
+
+            setSelected(eEvent){
+                this.set("selectedCity", eEvent.target.selected);
+                this.set("candidateCities", [eEvent.target.selected]);
+            }
+
+            // function called when typing in name
+            findCity(eEvent) {
+                var matches = [];
+                for(let city in this.cityList) {
+                    if(this.cityList.hasOwnProperty(city) 
+                    && this.cityList[city].name.toLowerCase().indexOf(this.searchString.toLowerCase()) !== -1
+                    && matches.length < 11) {
+                        matches.push(this.cityList[city]);
+                    }
+                }
+                this.set("candidateCities", matches);
+            }
+        }
+        // register the component Class
+        customElements.define(FormComponent.is, FormComponent);
+    </script>
+</dom-module>
